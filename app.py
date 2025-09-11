@@ -4,7 +4,28 @@ from bs4 import BeautifulSoup
 
 st.title("👥 Quem eu sigo que não me segue de volta")
 
-st.write("Faça upload dos dois arquivos exportados do Instagram:")
+st.subheader("📖 Como exportar seus arquivos do Instagram")
+
+st.markdown("""
+1. Acesse **Configurações** no Instagram  
+2. Vá em **Central de contas**  
+3. Clique em **Suas informações e permissões**  
+4. Escolha **Exportar suas informações**  
+5. Clique em **Criar exportação**  
+6. Selecione **Exportar para dispositivo**  
+7. Em **Personalizar informações**, marque apenas **Seguidores e seguindo**  
+8. Clique em **Iniciar exportação**  
+9. Aguarde a confirmação por email e faça o download do arquivo `.zip`  
+
+Depois de baixar:  
+- **Descompacte** o arquivo `.zip`  
+- Entre no diretório: `connections/followers_and_following/`  
+- Lá estarão os arquivos:  
+  - `followers_1.html`  
+  - `following.html`  
+
+👉 Faça upload desses dois arquivos abaixo:
+""")
 
 followers_file = st.file_uploader("Carregar **Followers**", type=["html"])
 following_file = st.file_uploader("Carregar **Following**", type=["html"])
@@ -34,3 +55,4 @@ if followers_file and following_file:
         file_name="nao_seguem_de_volta.csv",
         mime="text/csv"
     )
+
