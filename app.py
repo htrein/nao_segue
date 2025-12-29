@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from bs4 import BeautifulSoup
+import re
 
 st.title("👥 Who I Follow That Don't Follow Me Back")
 
@@ -37,22 +38,38 @@ if followers_file and following_file:
 
     # Extract usernames from href when possible (e.g. /username/). Normalize to lowercase.
     def extract_usernames(html):
-        soup = BeautifulSoup(html, "html.parser")
-        users = set()
-        for a in soup.find_all("a", href=True):
-            href = a["href"]
-            # user profiles usually look like '/username/'
-            if href.startswith("/") and not href.startswith("/p/") and not href.startswith("/explore"):
-                username = href.strip("/").split("/")[0]
-                if username:
-                    users.add(username.lower())
-        # fallback: if no usernames found via href, use visible text
-        if not users:
-            for a in soup.find_all("a"):
-                txt = a.text.strip()
-                if txt:
-                    users.add(txt.lower())
-        return sorted(users)
+      soup = BeautifulSoup(html, "html.parser")
+      users = set()
+      insta_re = re.compile(r"(?:https?://)?(?:www\.)?instagram\.com(?:/_u)?/([^/?#]+)", re.IGNORECASE)
+      for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        # if it's a full instagram URL, extract username
+        m = insta_re.search(href)
+        if m:
+          users.add(m.group(1).lower())
+          continue
+        # user profiles sometimes look like '/username/'
+        if href.startswith("/") and not href.startswith("/p/") and not href.startswith("/explore"):
+          username = href.strip("/").split("/")[0]
+          if username:
+            users.add(username.lower())
+      # fallback: if no usernames found via href, use visible text (handle full URLs or @username)
+      if not users:
+        for a in soup.find_all("a"):
+          txt = a.text.strip()
+          if not txt:
+            continue
+          # extract from text if it contains instagram url
+          m = insta_re.search(txt)
+          if m:
+            users.add(m.group(1).lower())
+            continue
+          # strip leading @ if present
+          if txt.startswith("@"):
+            users.add(txt.lstrip("@").lower())
+          else:
+            users.add(txt.lower())
+      return sorted(users)
 
     followers = extract_usernames(followers_html)
     following = extract_usernames(following_html)
