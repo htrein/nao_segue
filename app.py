@@ -35,12 +35,32 @@ if followers_file and following_file:
     followers_html = followers_file.read().decode("utf-8")
     following_html = following_file.read().decode("utf-8")
 
-    # Extrair usernames
-    followers = [a.text.strip() for a in BeautifulSoup(followers_html, "html.parser").find_all("a")]
-    following = [a.text.strip() for a in BeautifulSoup(following_html, "html.parser").find_all("a")]
+    # Extrair usernames preferencialmente de href (ex.: /username/). Normaliza para minúsculas.
+    def extract_usernames(html):
+      soup = BeautifulSoup(html, "html.parser")
+      users = set()
+      for a in soup.find_all("a", href=True):
+        href = a["href"]
+        # perfis de usuário costumam ser '/username/'
+        if href.startswith("/") and not href.startswith("/p/") and not href.startswith("/explore"):
+          username = href.strip("/").split("/")[0]
+          if username:
+            users.add(username.lower())
+      # fallback: se não encontrou nada via href, usar texto visível
+      if not users:
+        for a in soup.find_all("a"):
+          txt = a.text.strip()
+          if txt:
+            users.add(txt.lower())
+      return sorted(users)
+
+    followers = extract_usernames(followers_html)
+    following = extract_usernames(following_html)
 
     # Quem você segue mas não te segue de volta
-    not_following_back = [u for u in following if u not in followers]
+    # Comparação em lowercase já feita; usar conjuntos para eficiência
+    followers_set = set(followers)
+    not_following_back = [u for u in following if u not in followers_set]
 
     # Mostrar resultado
     df = pd.DataFrame(not_following_back, columns=["username"])
