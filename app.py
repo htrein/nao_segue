@@ -15,8 +15,9 @@ st.markdown("""
 5. Click **Create export**
 6. Select **Download to device**
 7. Under **Customize information**, check only **Followers and Following**
-8. Click **Start export**
-9. Wait for the confirmation email and download the `.zip` file
+8. Under **Date range**, choose **All time** (include all data)
+9. Click **Start export**
+10. Wait for the confirmation email and download the `.zip` file
 
 After downloading:
 - **Unzip** the `.zip` file
@@ -79,17 +80,22 @@ if followers_file and following_file:
     followers_set = set(followers)
     not_following_back = [u for u in following if u not in followers_set]
 
-    # Mostrar resultado
-    df = pd.DataFrame(not_following_back, columns=["username"])
+    # Mostrar resultado como links para facilitar unfollow
+    profiles = [f"https://www.instagram.com/{u}/" for u in not_following_back]
+    df = pd.DataFrame({"username": not_following_back, "profile_url": profiles})
     st.subheader("🚫 Users you follow who don't follow you back:")
-    st.dataframe(df, use_container_width=True)
+    if not not_following_back:
+        st.write("No users found — everyone you follow follows you back.")
+    else:
+        for username, url in zip(not_following_back, profiles):
+            st.markdown(f"- [{username}]({url})")
 
-    # Botão para baixar CSV
+    # Button to download CSV (includes profile URLs)
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
-      label="📥 Download CSV",
+        label="📥 Download CSV",
         data=csv,
-      file_name="not_following_back.csv",
+        file_name="not_following_back.csv",
         mime="text/csv"
     )
 
